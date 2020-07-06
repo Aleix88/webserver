@@ -3,4 +3,4 @@
 sudo rm -rf /etc/apache2/sites-available/$1.conf
 sudo rm -rf /var/www/$1 
 sudo a2dissite $1.conf
-sudo certbot delete --cert-name aleixdiaz.es
+sudo certbot delete --cert-name $1
