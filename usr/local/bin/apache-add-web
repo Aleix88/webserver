@@ -1,0 +1,38 @@
+#CONSTANTS
+CONF_DIR="/etc/apache2/sites-available"
+WEB_DIR="/var/www"
+
+#Variables
+
+echo "Enter your domain name: "
+read yourDomain
+export DOMAIN="$yourDomain"
+
+envsubst < /etc/webserver/apache-base-configs/HTTP.conf > "$CONF_DIR/$yourDomain.conf" 
+
+echo "Do you want to use HTTPS in this domain? (Y / N)"
+read needsHttps
+#To Uppercase
+needsHttps=$(echo "$needsHttps" | tr a-z A-Z)
+
+if [ "$needsHttps" = "Y" ] || [ "$needsHttps" = "YES" ]; then
+	envsubst < /etc/webserver/apache-base-configs/HTTPS.conf > "$CONF_DIR/$yourDomain.conf"
+	needsHttps="YES"
+	read cerbotParams
+	echo "Add any cerbot params or leave blank for default (www.yourDomain and yourDomain):"
+	#LETSENCRYPT
+	sudo certbot --apache -d $yourDomain -d www.$yourDomain $cerbotParams
+fi 
+
+echo "Configuring apache virtual host..."
+
+sudo mkdir $WEB_DIR/$yourDomain
+sudo chown -R $USER:$USER $WEB_DIR/$yourDomain
+sudo chmod -R 755 $WEB_DIR/$yourDomain
+echo "<h1>$yourDomain is under construction</h1>" > $WEB_DIR/$yourDomain/index.html
+systemctl reload apache2
+sudo a2ensite $yourDomain.conf
+sudo apache2ctl configtest
+systemctl reload apache2
+sudo systemctl restart apache2
+
